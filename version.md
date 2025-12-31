@@ -1,0 +1,18 @@
+version 0.0.1:
+- Create Messenger service and front end
+- Add re-sending unsent messages
+- Add Seen feature
+- Add trigger update last message time after insert new message in messenger_message table + Delete logged_out guest rooms more then 6 months from messenger_guest_room after insert new message in messenger_message table
+- Add trigger Delete messages from messenger_message after updating logged_out date in messenger_guest_room table
+- Add upload images
+- Mute notifications
+- Search guests for hotel panel
+- Logout guest
+- Device view for hotels
+- Message status, Not Sent Yet and Delivered
+- Retrieve old messages
+- Fix play sound for only receivers
+- Add date time for each message
+- Assign guest feature
+- Send refresh guest details to hotel private chats
+- Add emojis
