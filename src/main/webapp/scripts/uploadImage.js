@@ -1,65 +1,73 @@
-jQuery(document).ready(function () {
-  ImgUpload();
-});
+/* Image picker of the upload dialog: preview, remove, limits. No HTML string building. */
+var ImageUpload = (function() {
 
-function ImgUpload() {
-  var imgWrap = "";
+	var MAX_SIZE = 5 * 1024 * 1024;
+	var ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/bmp'];
 
-  $('.upload__inputfile').each(function () {
-    $(this).on('change', function (e) {
-      imgWrap = $(this).closest('.upload__box').find('.upload__img-wrap');
-      var maxLength = $(this).attr('data-max_length');
+	var selected = [];       // { file, url }
+	var input = null, wrap = null, notify = function(msg) { alert(msg); };
 
-      var files = e.target.files;
-      var filesArr = Array.prototype.slice.call(files);
-      var iterator = 0;
-      filesArr.forEach(function (f, index) {
+	var render = function() {
+		wrap.textContent = '';
+		selected.forEach(function(item, index) {
+			var box = document.createElement('div');
+			box.className = 'upload__img-box';
 
-        if (!f.type.match('image.*')) {
-          return;
-        }
-        
-        if (f.size > 5000000) {
-        	alert("Image should be maximum 5 MB.");
-        	return;
-        }
+			var img = document.createElement('img');
+			img.src = item.url;
+			img.alt = item.file.name;
+			box.appendChild(img);
 
-        if (imgArray.length >= maxLength) {
-        	alert("Maximum " + maxLength + " images allowed.");
-          return false;
-        } else {
-          var len = 0;
-          for (var i = 0; i < imgArray.length; i++) {
-            if (imgArray[i] !== undefined) {
-              len++;
-            }
-          }
-          if (len > maxLength) {
-            return false;
-          } else {
-            imgArray.push(f);
+			var remove = document.createElement('button');
+			remove.type = 'button';
+			remove.className = 'upload__img-close';
+			remove.setAttribute('aria-label', 'Remove ' + item.file.name);
+			remove.addEventListener('click', function() {
+				URL.revokeObjectURL(item.url);
+				selected.splice(index, 1);
+				render();
+			});
+			box.appendChild(remove);
 
-            var reader = new FileReader();
-            reader.onload = function (e) {
-              var html = "<div class='upload__img-box'><div style='background-image: url(" + e.target.result + ")' data-number='" + $(".upload__img-close").length + "' data-file='" + f.name + "' class='img-bg'><div class='upload__img-close'></div></div></div>";
-              imgWrap.append(html);
-              iterator++;
-            }
-            reader.readAsDataURL(f);
-          }
-        }
-      });
-    });
-  });
+			wrap.appendChild(box);
+		});
+	};
 
-  $('body').on('click', ".upload__img-close", function (e) {
-    var file = $(this).parent().data("file");
-    for (var i = 0; i < imgArray.length; i++) {
-      if (imgArray[i].name === file) {
-        imgArray.splice(i, 1);
-        break;
-      }
-    }
-    $(this).parent().parent().remove();
-  });
-}
+	var add = function(files) {
+		var maxLength = parseInt(input.getAttribute('data-max_length'), 10) || 5;
+		Array.prototype.forEach.call(files, function(file) {
+			if (ALLOWED_TYPES.indexOf(file.type) === -1) {
+				notify('Only PNG, JPEG, GIF and BMP images are allowed.');
+				return;
+			}
+			if (file.size > MAX_SIZE) {
+				notify('Image should be maximum 5 MB.');
+				return;
+			}
+			if (selected.length >= maxLength) {
+				notify('Maximum ' + maxLength + ' images allowed.');
+				return;
+			}
+			selected.push({ file: file, url: URL.createObjectURL(file) });
+		});
+		input.value = '';
+		render();
+	};
+
+	return {
+		init: function(options) {
+			input = document.querySelector('.upload__inputfile');
+			wrap = document.querySelector('.upload__img-wrap');
+			if (options && options.notify) notify = options.notify;
+			input.addEventListener('change', function(e) { add(e.target.files); });
+		},
+		files: function() {
+			return selected.map(function(item) { return item.file; });
+		},
+		clear: function() {
+			selected.forEach(function(item) { URL.revokeObjectURL(item.url); });
+			selected = [];
+			render();
+		}
+	};
+})();

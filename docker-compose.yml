@@ -1,0 +1,66 @@
+# Local stack: MySQL + mock auth service + messenger.
+# Secrets come from the .env file next to this file (see .env.example), never from this file.
+#
+#   docker compose up -d --build
+#   Hotel staff : http://localhost:8080/messenger/?h=1&cn=demohotel&guest=0&session=staff1
+#   Guest       : http://localhost:8080/messenger/?h=1&cn=demohotel&guest=1&session=john&roomNumber=101
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD in .env}
+      MYSQL_DATABASE: demo
+      MESSENGER_DB_USER: messenger
+      MESSENGER_DB_PASSWORD: ${MESSENGER_DB_PASSWORD:?set MESSENGER_DB_PASSWORD in .env}
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql/01-common.sql:/docker-entrypoint-initdb.d/01-common.sql:ro
+      - ./docker/mysql/02-tenant-schema.sql:/docker-entrypoint-initdb.d/02-tenant-schema.sql:ro
+      - ./src/main/databaseScripts/001_tables.sql:/docker-entrypoint-initdb.d/03-messenger-tables.sql:ro
+      - ./docker/mysql/04-seed.sh:/docker-entrypoint-initdb.d/04-seed.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    # not published on the host: only reachable by the other containers
+
+  mock-auth:
+    image: node:22-alpine
+    command: ["node", "/app/server.js"]
+    user: node
+    read_only: true
+    environment:
+      ALLOWED_ORIGIN: http://localhost:8080
+    volumes:
+      - ./docker/mock-auth/server.js:/app/server.js:ro
+    ports:
+      - "127.0.0.1:9099:9099"
+
+  messenger:
+    build: .
+    depends_on:
+      mysql:
+        condition: service_healthy
+      mock-auth:
+        condition: service_started
+    environment:
+      COMMON_DB_URL: jdbc:mysql://mysql:3306/common?useSSL=false&allowPublicKeyRetrieval=true&characterEncoding=UTF-8
+      COMMON_DB_USER: messenger
+      COMMON_DB_PASSWORD: ${MESSENGER_DB_PASSWORD}
+      COMMON_DB_CATALOG: common
+      DEFAULT_CUSTOMER_ID: demo
+      MESSENGER_ENCRYPTION_KEY: ${MESSENGER_ENCRYPTION_KEY:?set MESSENGER_ENCRYPTION_KEY in .env}
+      AUTH_VALIDATE_URL: http://mock-auth:9099/ncs/token/validateToken
+      MESSENGER_AUTH_SERVICE_URL: http://localhost:9099
+      MESSENGER_DEBUG: "false"
+    volumes:
+      - uploads:/tsl/midd_data
+      - ./docker/tomcat/portal.xml:/usr/local/tomcat/conf/Catalina/localhost/portal.xml:ro
+    ports:
+      - "127.0.0.1:8080:8080"
+
+volumes:
+  mysql-data:
+  uploads:

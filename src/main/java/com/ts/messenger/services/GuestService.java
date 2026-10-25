@@ -3,16 +3,21 @@ package com.ts.messenger.services;
 import java.util.List;
 
 import com.ts.messenger.entities.GuestRoomEntity;
-import com.ts.messenger.utils.Response;
 
 public interface GuestService {
 
 	public GuestRoomEntity createGuest(String username, String email, String roomNumber, String roomTypeCode, String hotelId);
-	
+
 	public GuestRoomEntity addHotel(GuestRoomEntity guestRoomEntity, String username);
 
 	/* roomId + hotelId = unique */
 	public GuestRoomEntity checkIfExist(String roomId, String nerochaHotelId);
+
+	/**
+	 * Returns the active chat of the room only if it belongs to guestUsername and chatSecurityToken matches,
+	 * null otherwise
+	 */
+	public GuestRoomEntity findAuthorizedChat(String roomNumber, String hotelId, String guestUsername, String chatSecurityToken);
 
 	public GuestRoomEntity save(GuestRoomEntity guestRoomEntity);
 
@@ -21,5 +26,5 @@ public interface GuestService {
 	public int logOut(String hotelId, String roomNumber, String guestUsername, String chatSecurityToken, String loggedOutDate);
 
 	public GuestRoomEntity checkIfExistGestUsername(String guestUsername);
-	
+
 }

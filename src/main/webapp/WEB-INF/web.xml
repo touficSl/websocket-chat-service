@@ -9,6 +9,8 @@
     <filter-class>
             com.song.web.filter.NocacheFilter
         </filter-class>
+    <!-- required by the SockJS HTTP fallback transports (xhr-streaming, xhr-polling) -->
+    <async-supported>true</async-supported>
   </filter>
   <filter-mapping>
     <filter-name>nocachefilter</filter-name>
@@ -22,4 +24,16 @@
     <param-name>WsUrl</param-name>
     <param-value>/messenger/sendmsg</param-value>
   </context-param>
+  <!-- Base URL of the authentication service (getCustomerByName, token/generateToken) used by the web client -->
+  <context-param>
+    <param-name>AuthServiceUrl</param-name>
+    <param-value>https://localhost:8080</param-value>
+  </context-param>
+  <session-config>
+    <cookie-config>
+      <http-only>true</http-only>
+      <secure>true</secure>
+    </cookie-config>
+    <tracking-mode>COOKIE</tracking-mode>
+  </session-config>
 </web-app>

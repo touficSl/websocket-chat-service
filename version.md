@@ -1,3 +1,18 @@
+version 1.1.0:
+- Security: removed Spring Data REST (all tables were readable/writable over HTTP)
+- Security: authenticated STOMP CONNECT, authorized SUBSCRIBE/SEND, errors sent only to the sender session
+- Security: 256-bit random chat tokens required for history, logout, assign and seen APIs
+- Security: AES-256-GCM message encryption with key from environment (legacy rows still readable)
+- Security: XSS-safe rendering, strict CSP, SRI, security headers, upload path traversal / image bomb protection
+- Security: secrets moved to environment variables, Spring Boot 2.0 -> 2.7.18, unused vulnerable dependencies removed
+- Fix: app failed to start (invalid HotelRepository derived query, static @PostConstruct)
+- Fix: SockJS HTTP fallback transports (async-supported filter), concurrent image uploads overwriting each other
+- Fix: staff could not load previous messages; history timestamps now in hotel timezone
+- Pooled tenant connections (HikariCP), count query for history paging, database indexes
+- New responsive UI with dark mode, unread badges, connection status, offline queue and auto reconnect
+- Docker: multi-stage build, Tomcat 9 non-root image, docker compose demo stack
+- Unit tests
+
 version 0.0.1:
 - Create Messenger service and front end
 - Add re-sending unsent messages

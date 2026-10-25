@@ -24,7 +24,9 @@ import com.ts.utils.NCIResponse;
 import com.ts.messenger.authentication.Credentials;
 
 public class Utils {
-	
+
+	private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(Utils.class);
+
 	// SUCC_MSG; contains success messages for the message field returned
 	public static Map<Integer, String> SUCC_MSG = new HashMap<Integer, String>() {
 		private static final long serialVersionUID = 1L;
@@ -65,8 +67,8 @@ public class Utils {
 	};
 
 	public static void printLogMessage(String className, String message) {
-		if(Credentials.isDebugMode()) { 
-			System.out.println("\n SYSTEM_LOGS >>> " + className + " - " + new SimpleDateFormat(Constants.DateTimeFormat).format(new Date()) + " - " + message + "\n");
+		if(Credentials.isDebugMode()) {
+			LOG.info("{} - {}", className, message);
 		}
 	}
 

@@ -11,19 +11,14 @@ import com.ts.messenger.repositories.MessageRepository;
 
 @Service("messageService")
 public class MessageServiceImpl implements MessageService {
-	
+
 	@Autowired
 	private MessageRepository messageRepository;
 
 	/** synchronized added to prevent deadlock problems **/
 	@Override
 	public synchronized MessageEntity save(MessageEntity message) {
-		try {
-			return messageRepository.save(message);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return null;
+		return messageRepository.save(message);
 	}
 
 	@Override
@@ -33,13 +28,13 @@ public class MessageServiceImpl implements MessageService {
 	}
 
 	@Override
-	public List<MessageEntity> getAllChatMessages(String guestUserName, String hotelId, String roomNumber) {
-		return messageRepository.allChatMessages(guestUserName, hotelId, roomNumber);
+	public long countChatMessages(String guestUserName, String hotelId, String roomNumber) {
+		return messageRepository.countChatMessages(guestUserName, hotelId, roomNumber);
 	}
 
 	@Override
 	public int updateMessageStatus(String roomNumber, String receiver, int guestRoomId, String status) {
 		return messageRepository.updateMessageStatus(roomNumber, receiver, guestRoomId, status);
 	}
-	
+
 }

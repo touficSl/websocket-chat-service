@@ -2,26 +2,32 @@ package com.ts.messenger.services;
 
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ts.messenger.entities.GuestRoomEntity;
 import com.ts.messenger.repositories.GuestEntityRepository;
-import com.ts.messenger.utils.PasswordGenerator;
+import com.ts.messenger.utils.SecureTokens;
 
 @Service("guestService")
 public class GuestServiceImpl implements GuestService {
-	
+
+	private static final Logger LOG = LoggerFactory.getLogger(GuestServiceImpl.class);
+
+	/* 256 bits of entropy */
+	private static final int CHAT_TOKEN_BYTES = 32;
+
 	@Autowired
 	private GuestEntityRepository guestEntityRepository;
-	
+
 	@Override
 	public GuestRoomEntity createGuest(String username, String email, String roomNumber, String roomTypeCode, String hotelId) {
-		
+
 		try {
-			
+
 			GuestRoomEntity guest = new GuestRoomEntity();
 			guest.setGuestUsername(username);
 			guest.setEmail(email);
@@ -29,28 +35,28 @@ public class GuestServiceImpl implements GuestService {
 			guest.setRoomTypeCode(roomTypeCode);
 			guest.sethotelId(hotelId);
 			guest.setDate(new Date());
-			guest.setSecurityToken(generateChatSecurityToken(username, roomNumber, roomTypeCode));
-			
+			guest.setSecurityToken(SecureTokens.generate(CHAT_TOKEN_BYTES));
 			return guestEntityRepository.save(guest);
+
 		} catch (Exception e) {
-			e.printStackTrace();
+			LOG.error("Unable to create guest room", e);
 			return null;
 		}
-	}
-	
-	private String generateChatSecurityToken(String username, String roomNumber, String roomTypeCode) {
-		String chatSecToken = "#" + username + "." + roomTypeCode + "." + roomNumber + "." +PasswordGenerator.generatePassword() + "#";
-		return chatSecToken;
 	}
 
 	@Override
 	public GuestRoomEntity checkIfExist(String roomNumber, String nerochaHotelId) {
-		
-		GuestRoomEntity user = null;
-		Optional<GuestRoomEntity> optionalUser = guestEntityRepository.findGuestRoom(roomNumber, nerochaHotelId);
-		if(optionalUser.isPresent()) user = optionalUser.get();
-		return user;
-		
+		return guestEntityRepository.findGuestRoom(roomNumber, nerochaHotelId).orElse(null);
+	}
+
+	@Override
+	public GuestRoomEntity findAuthorizedChat(String roomNumber, String hotelId, String guestUsername, String chatSecurityToken) {
+		GuestRoomEntity guestRoom = checkIfExist(roomNumber, hotelId);
+		if (guestRoom == null || guestRoom.getGuestUsername() == null || !guestRoom.getGuestUsername().equals(guestUsername))
+			return null;
+		if (!SecureTokens.equals(guestRoom.getSecurityToken(), chatSecurityToken))
+			return null;
+		return guestRoom;
 	}
 
 	@Override
@@ -59,7 +65,7 @@ public class GuestServiceImpl implements GuestService {
 			guest.setHotelUsername(username);
 			return guestEntityRepository.save(guest);
 		} catch (Exception e) {
-			e.printStackTrace();
+			LOG.error("Unable to assign hotel user to guest room", e);
 			return null;
 		}
 	}
@@ -69,7 +75,7 @@ public class GuestServiceImpl implements GuestService {
 		try {
 			return guestEntityRepository.save(guestRoomEntity);
 		} catch (Exception e) {
-			e.printStackTrace();
+			LOG.error("Unable to save guest room", e);
 			return null;
 		}
 	}

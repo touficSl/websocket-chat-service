@@ -504,7 +504,8 @@ const EmojiPicker = function(options) {
                     const endPos = myField.selectionEnd;
                     myField.value = myField.value.substring(0, startPos) + myValue + myField.value.substring(endPos, myField.value.length);
                     
-                    functions.setCaretPosition(myField, startPos + 2)
+                    functions.setCaretPosition(myField, startPos + myValue.length)
+                    myField.dispatchEvent(new Event('input', { bubbles: true }))
                     
                 } else {
                     myField.value += myValue;
@@ -536,14 +537,14 @@ const EmojiPicker = function(options) {
 
         search: e => {
 
-            const val = e.target.value.trim();
+            /* plain text search (user input is not a regular expression) */
+            const val = e.target.value.trim().toLowerCase();
 
-            if (!emojiList) {
-                emojiList = Array.from(document.querySelectorAll('.fg-emoji-picker-category-wrapper li'));
-            }
+            /* the picker is re-created on every open, never reuse old nodes */
+            emojiList = Array.from(document.querySelectorAll('.fg-emoji-picker-category-wrapper li'));
 
             emojiList.filter(emoji => {
-                if (!emoji.getAttribute('data-title').match(val)) {
+                if (!(emoji.getAttribute('data-title') || '').toLowerCase().includes(val)) {
                     emoji.style.display = 'none'
                 } else {
                     emoji.style.display = ''

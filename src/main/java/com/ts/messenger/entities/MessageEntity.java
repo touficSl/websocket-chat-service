@@ -4,6 +4,8 @@ import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
@@ -14,9 +16,10 @@ import com.ts.messenger.utils.AESencrp;
 
 @Entity
 @Table(name="messenger_message")
-public class MessageEntity  implements Comparable{
+public class MessageEntity implements Comparable<MessageEntity> {
 
 	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name="id")
 	private int id;
 	
@@ -56,8 +59,8 @@ public class MessageEntity  implements Comparable{
 		try {
 			this.setContent(AESencrp.encrypt(msg.getContent()));
 		} catch (Exception e) {
-			e.printStackTrace();
-			this.setContent(msg.getContent());
+			/* Never fall back to storing the message in clear text */
+			throw new IllegalStateException("Unable to encrypt message content", e);
 		}
 		this.setContentType(msg.getContentType());
 		this.setSender(msg.getSender());
@@ -155,8 +158,7 @@ public class MessageEntity  implements Comparable{
 
 	/* ORDER BY createdDate ASC */
 	@Override
-	public int compareTo(Object messageObj) {
-		MessageEntity message = (MessageEntity) messageObj;
+	public int compareTo(MessageEntity message) {
 		return this.createdDate.compareTo(message.getCreatedDate());
 	}
 }

@@ -1,0 +1,7 @@
+target/
+.git/
+.settings/
+.env
+*.war
+docker/
+README.md

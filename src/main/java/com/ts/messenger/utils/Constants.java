@@ -5,7 +5,7 @@ import java.util.List;
 
 public final class Constants {
 
-	public static final String BACKEND_VERSION = "1.0.2";
+	public static final String BACKEND_VERSION = "1.1.0";
 
 	public static final String SERVICE_NAME = "messenger"; 
 	public static final boolean DEBUG = true;
